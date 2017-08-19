@@ -1,0 +1,83 @@
+Secure, Precise, and Fast Floating-Point Operations on x86 Processors
+---------------------------------------------------------------------
+Floating-point computations introduce several side channels. Solution that closes these side 
+channels while preserving the precision of non-secure executions exploiting microarchitectural 
+features of the x86 architecture along with compilation techniques.
+
+Problems:
+  Both x86 and ARM2 provide variable-latency floating-point instructions. Since subnormal values 
+are rare, hardware vendors typically support such values in microcode, so as not to slow down the 
+common case. Variable latency floating-point instructions represent only a part of the problem, 
+since higher level floating-point operations, such as sine and cosine, are typically implemented 
+in software. Thus, the implementation of these floating-point operations can leak secret information 
+through other side channels as well.
+
+Prevention requirements:
+ - fixed-time operations that are independent of secret values
+ - disabled exceptions
+ - sequential control flow
+ - uniform data accesses that are independent of the value of secret variables
+
+Solution components: 
+ - Leverages unused SIMD lanes so that fast operations on normal operands are accompanied by slower 
+dummy computations on subnormal operands, yielding a consistent yet low instruction latency for all 
+types of operands.
+ - A software library of higher level floating-point operations like sine and cosine. The key to 
+creating this second component is a new code transformation that produces fixed-latency functions 
+through normalized control flows and data access patterns. 
+
+Limitations: 
+  Escort rejects programs that contain unsupported features—I/O operations and recursive function calls. 
+Escort is unable to handle programs containing irreducible control flow graphs (CFGs), but standard 
+compiler transformations [24] can transform irreducible CFGs into reducible CFGs.To avoid the added 
+hardware complexity of supporting subnormal numbers, which occur infrequently, vendors typically 
+process subnormal values in microcode, which is orders of magnitude slower than hardwired logic.
+
+An adversary that can measure the latency of a floating-point instruction can make reasonable estimates 
+about the operand type, potentially inferring secret values using the timing channel The key insight behind 
+Escort’s secure elementary operations is that the latencies of SIMD instructions are determined by the 
+slowest operation among the SIMD lanes, so the Escort compiler ensures that each elementary instruction 
+runs alongside a dummy instruction whose operand will produce the longest possible latency.
+
+double escort_mul_dp(double x, double y) {
+  const double k_normal_dp = 1.4;
+  const double k_subnormal_dp = 2.225e-322;
+  double result;
+  __asm__ volatile(
+    "movdqa %1, %%xmm14;"
+    "movdqa %2, %%xmm15;"
+    "pslldq $8, %1;"
+    "pslldq $8, %2;"
+    "por %3, %1;"
+    "por %4, %2;"
+    "movdqa %2, %0;"
+    "mulpd %1, %0;"
+    "psrldq $8, %0;"
+    "movdqa %%xmm14, %1;"
+    "movdqa %%xmm15, %2;"
+  : "=x" (result), "+x" (x), "+x" (y)
+  : "x" (k_subnormal_dp), "x" (k_normal_dp)
+  : "xmm15", "xmm14");
+  return result;
+}
+
+Escort’s secure operations can be up to two orders of magnitude slower than their non-secure counterparts. 
+Hence, their compiler minimizes their usage by using taint tracking. 
+
+The second component is a math library developed using techniques similar to Raccoon. Important techniques:
+  Compiler converts the given code into straight-line code so that every invocation of the code executes the 
+same instructions. To preserve control dependences, the basic blocks are topologically sorted, and then the 
+code is assembled into a single basic block with branch instructions removed. To Escort compiler replaces 
+store instructions with conditional data-copy operations that are guarded by the basic block’s predicate, 
+so memory is only updated by instructions whose predicate is true. Transforms each array access into a 
+linear sweep over the entire array, which hides from the adversary the address of the program’s actual array 
+index. This is feasible because math library functions typically use only a few small lookup tables, thus 
+requiring relatively few memory accesses. 
+
+Escort’s overhead is substantial, with a geometric mean of 32.6×. 
+
+
+
+
+
+
