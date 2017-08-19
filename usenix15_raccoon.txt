@@ -1,0 +1,26 @@
+Raccoon: Closing Digital Side-Channels through Obfuscated Execution
+
+Key idea is to obfuscate the program at the source code level to provide the illusion that many extraneous program paths are executed. After obfuscation, the adversary’s view appears the same as if the program were run many times with different inputs. Raccoon does not support all features of the C99 standard. Raccoon cannot analyze libraries since their source code is not available when compiling the end user’s application. 
+
+Raccoon’s components: 
+ - A taint analysis that identifies program statements that require obfuscation:
+ - A runtime transaction-like memory mechanism for buffering intermediate results along decoy paths 
+ - A program transformation that obfuscates control-flow statements
+ - A code transformation that uses software Path ORAM to hide array accesses that depend on secrets.
+
+Raccoon’s key building block is CMOV x86 instruction. Raccoon requires the user to annotate secret variables using the attribute construct. With these secret variables identified, Raccoon performs interprocedural taint analysis to identify branches and data access statements that require obfuscation. Raccoon’s Path ORAM implementation streams over the position map and stash arrays and uses the oblivious store operation to selectively read or update array elements. 
+
+There are two main sources of Raccoon overhead: 
+ - ORAM operations (or streaming)
+ - Control-flow obfuscation
+The geometric mean of the overhead is ∼16.1×.
+
+Possible ORAM implementations:
+ 1. Recursive ORAM, places the position map in a smaller ORAM until the position map of the smallest ORAM fits in the CPU registers. 
+ 2. A nonrecursive solution that streams over a single large position map. 
+ 3. Uses AVX intrinsic operations and streams over the entire array to access a single element. 
+
+Large memory bandwidth requirement, making the modified software Path ORAM far costlier than streaming over arrays. Software Path ORAM implementation is configured with a block size of 64 bytes (Cache Line Size).
+
+
+
