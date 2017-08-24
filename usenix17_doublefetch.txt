@@ -35,15 +35,15 @@ analysis and characterization is not fully automated, it only resulted in 90 can
 investigation, which took only a fewdays to analyze them, making the needed manual effort of our approach 
 acceptable.
 
-Then uses the information gathered through manuall analysis to analyze three different kernels: Linux, Android, 
-and FreeBSD. They found six double-fetch bugs in total. Five of them are previously unknown bugs that have not 
-been reported before (CVE-2016-5728, -6130, -6136, -6156, -6480), and the sixth one (CVE-2015-1420) is a 
-double-fetch bug present in the newest Android (version 6.0.1) which is based on an older Linux kernel (version 3.18) 
-containing the bug, which has been fixed in the mainline Linux kernel since Linux 4.1. Three of the five new bugs 
-are exploitable double-fetch vulnerabilities (CVE-2016-5728, -6136, -6480). Four of the five are in drivers 
-(CVE-2016-5728, -6130, -6156, -6480).
+Then uses the information gathered through manuall analysis to analyze three different kernels: Linux, 
+Android, and FreeBSD. They found six double-fetch bugs in total. Five of them are previously unknown bugs 
+that have not been reported before (CVE-2016-5728, -6130, -6136, -6156, -6480), and the sixth one 
+(CVE-2015-1420) is a double-fetch bug present in the newest Android (version 6.0.1) which is based on an 
+older Linux kernel (version 3.18) containing the bug, which has been fixed in the mainline Linux kernel 
+since Linux 4.1. Three of the five new bugs are exploitable double-fetch vulnerabilities 
+(CVE-2016-5728, -6136, -6480). Four of the five are in drivers (CVE-2016-5728, -6130, -6156, -6480).
 
 Limitation:
-The nature of the analysis prevents the detection of double fetches that occur on a lower level, e.g., in preprocessed 
-or compiled code. Double-fetch bugs can even occur in macros. A double-fetch bug can also be introduced through compiler 
-optimization.
+The nature of the analysis prevents the detection of double fetches that occur on a lower level, e.g., 
+in preprocessed or compiled code. Double-fetch bugs can even occur in macros. A double-fetch bug can also 
+be introduced through compiler optimization.
