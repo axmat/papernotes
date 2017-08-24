@@ -1,0 +1,49 @@
+How Double-Fetch Situations turn into Double-Fetch Vulnerabilities: A Study of Double Fetches in the Linux Kernel
+-----------------------------------------------------------------------------------------------------------------
+Static approach that systematically detects potential double-fetch vulnerabilities in the Linux 
+kernel using a pattern-based analysis. Developed a static analysis, based on the Coccinelle matching 
+engine, that detects double-fetch situations which can cause kernel vulnerabilities. The approach 
+found six previously unknown double-fetch bugs in *nix kernel. Previous work has not discovered any 
+double-fetch vulnerability in Linux, FreeBSD or OpenBSD. 
+
+26% of the Linux kernel source files belong to hardware architectures other than x86 which cannot be 
+analyzed with Jurczyk and Coldwind’s x86-based dynamic analysis technique. 
+
+We categorize the identified double fetches into three typical scenarios 
+  - type selection
+  - size checking
+  - shallow copy
+
+One double-fetch vulnerability has been found in the Android 6.0.1 kernel, which was already fixed in 
+newer Linux kernels
+
+Technically, a double fetch takes place within a kernel function, such as a syscall, which is invoked 
+by a user application from user mode. the kernel function fetches a value twice from the same memory 
+location in the user space, the first time to check and verify it and the second time to use it. within 
+the time window between the two kernel fetches, a concurrently running user thread modi- fies the value.
+(e.g., copy_from_user() and get_user())
+
+Methodolgy:
+Using a basic double-fetch pattern that identifies when a function has multiple invocations of a transfer 
+function. Then we manually investigate the candidate files found by the pattern matching, to categorize 
+the scenarios in which a double fetch occurs and when a double-fetch bug or vulnerability is prone to 
+happen based on the context information that is relevant to the bug. 
+
+we noticed that there are plenty of cases where the transfer functions fetch data from different addresses 
+or from the same address but with different offsets. All these cases are false positives. Even though the 
+analysis and characterization is not fully automated, it only resulted in 90 candidates that needed manual 
+investigation, which took only a fewdays to analyze them, making the needed manual effort of our approach 
+acceptable.
+
+Then uses the information gathered through manuall analysis to analyze three different kernels: Linux, Android, 
+and FreeBSD. They found six double-fetch bugs in total. Five of them are previously unknown bugs that have not 
+been reported before (CVE-2016-5728, -6130, -6136, -6156, -6480), and the sixth one (CVE-2015-1420) is a 
+double-fetch bug present in the newest Android (version 6.0.1) which is based on an older Linux kernel (version 3.18) 
+containing the bug, which has been fixed in the mainline Linux kernel since Linux 4.1. Three of the five new bugs 
+are exploitable double-fetch vulnerabilities (CVE-2016-5728, -6136, -6480). Four of the five are in drivers 
+(CVE-2016-5728, -6130, -6156, -6480).
+
+Limitation:
+The nature of the analysis prevents the detection of double fetches that occur on a lower level, e.g., in preprocessed 
+or compiled code. Double-fetch bugs can even occur in macros. A double-fetch bug can also be introduced through compiler 
+optimization.
